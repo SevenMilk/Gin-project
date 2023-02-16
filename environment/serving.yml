@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+    serving_redis:
+        image: redis:latest
+        container_name: serving_redis
+        hostname: redis
+        restart: always
+        command: redis-server /etc/redis/redis.conf
+        volumes:
+            - ./serving/redis/redis.conf:/etc/redis/redis.conf
+            - ./serving/redis/data:/data
+        ports:
+            - "6379:6379"
+        networks:
+            serving: 
+                ipv4_address: 172.31.24.4
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 30s
+            retries: 10
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: "2G"
+
+    mysql:
+        image: mysql:latest
+        container_name: mysql_db
+        hostname: mysql
+        restart: always
+        volumes:
+            - ./mysql/mydir:/mydir
+            - ./mysql/datadir:/var/lib/mysql
+            - ./mysql/conf/my.cnf:/etc/my.cnf
+            - ./mysql/source:/docker-entrypoint-initdb.d
+        environment:
+            MYSQL_ROOT_PASSWORD: jiang123
+            MYSQL_DATABASE: test_db
+            TZ: Asia/Taipei
+        ports:
+            - 3306:3306
+        networks:
+            serving: 
+                ipv4_address: 172.31.24.3
+        healthcheck:
+            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: "2G"
+networks:
+    serving:
+        driver: bridge
+        ipam: 
+            driver: default
+            config:
+                - subnet: 172.31.0.0/16
