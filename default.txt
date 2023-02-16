@@ -1,0 +1,6 @@
+xmltodict==0.13.0
+pandas==1.5.2
+pydantic==1.10.5
+python-dotenv==0.21.1
+requests==2.28.1
+mysql-connector-python==8.0.32
