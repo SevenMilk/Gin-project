@@ -3,8 +3,8 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"online/api/v1/models/maindb"
-	"online/api/v1/models/cache"
+	"online/app/v1/models/cache"
+	"online/app/v1/models/maindb"
 	"online/global"
 	"reflect"
 
