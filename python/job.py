@@ -68,7 +68,8 @@ def transform(data):
 def output(df, mycursor, mydb):
     insert_data = ("insert IGNORE into customers (id,name,address,lat,lng,\
                                                   locname,img,intro,icon,type,uk)\
-                    values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)")
+                    values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\
+                    ON DUPLICATE KEY UPDATE uk=VALUES(uk)")
     for row in df.values.tolist():
         mycursor.execute(insert_data, tuple(row))
 

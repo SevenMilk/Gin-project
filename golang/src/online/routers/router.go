@@ -15,7 +15,7 @@ func InitRouter() *gin.Engine {
 	r.Use(middleware.LoggerToFile())
 	global.Mysql = db.InitMySQLDB()
 	userv1_h := api.UserV1{}
-	userv1 := r.Group("/user/v1")
+	userv1 := r.Group("/api/v1")
 	{
 		userv1.GET("/all", userv1_h.GetAllData)
 		userv1.GET("/id=:id", userv1_h.GetFilterId)
