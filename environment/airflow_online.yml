@@ -1,7 +1,7 @@
 version: '3.8'
 x-airflow-common:
     &airflow-common
-    image: moonlight165/wei_airflow:0.0.2
+    image: moonlight165/wei_airflow:0.0.3
     user: root:root
     restart: always
     env_file:
@@ -84,7 +84,7 @@ services:
         networks:
             airflow: 
                 ipv4_address: 172.30.240.5
-    airflow-webserver:
+    airflow_webserver:
         <<: *airflow-common
         container_name: airflow_webserver
         hostname: webserver
@@ -103,7 +103,7 @@ services:
         <<: *airflow-common
         container_name: airflow_scheduler
         hostname: scheduler
-        command: airflow scheduler
+        command:  airflow scheduler
         networks:
             airflow: 
                 ipv4_address: 172.30.240.7
@@ -116,7 +116,7 @@ services:
         <<: *airflow-common
         container_name: airflow_worker
         hostname: worker
-        command: airflow celery worker -q data-analyze
+        command:  airflow celery worker -q data-analyze
         networks:
             airflow: 
                 ipv4_address: 172.30.240.8
@@ -133,7 +133,7 @@ services:
         hostname: flower
         ports:
             - "5561:5555"
-        command: airflow celery flower
+        command:  airflow celery flower
         networks:
             airflow: 
                 ipv4_address: 172.30.240.9
@@ -142,6 +142,64 @@ services:
             interval: 5s
             timeout: 60s
             retries: 5
+    airflow_statsd:
+        image: prom/statsd-exporter:latest
+        container_name: airflow_statsd
+        hostname: statsd
+        ports:
+            - "9125:9125/udp"
+            - "9102:9102/tcp"
+        command: "--statsd.listen-udp=:9125 --web.listen-address=:9102"
+        user: root:root
+        restart: always
+        depends_on:
+            - airflow_webserver
+            - airflow_worker
+            - airflow_scheduler
+            - airflow_flower
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: "2G"
+        networks:
+            airflow:
+                ipv4_address: 172.30.240.10
+    airflow_prometheus:
+        image: prom/prometheus:latest
+        container_name: airflow_prometheus
+        hostname: prometheus
+        ports:
+            - "9090:9090/tcp"
+        user: root:root
+        restart: always
+        depends_on:
+            - airflow_statsd
+        volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./prometheus_volume:/prometheus
+        networks:
+            airflow:
+                ipv4_address: 172.30.240.11
+    airflow_grafana:
+        image: grafana/grafana:main-ubuntu
+        container_name: airflow_grafana
+        hostname: grafana
+        ports:
+          - "3000:3000/tcp"
+        environment:
+          - GF_SECURITY_ADMIN_USER=admin
+          - GF_SECURITY_ADMIN_PASSWORD=admin
+          - GF_PATHS_PROVISIONING=/grafana/provisioning
+        user: root:root
+        restart: always
+        depends_on:
+            - airflow_prometheus
+        volumes:
+            - ./grafana:/var/lib/grafana
+        networks:
+            airflow:
+                ipv4_address: 172.30.240.12
 networks:
     airflow:
         driver: bridge
